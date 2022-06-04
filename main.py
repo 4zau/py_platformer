@@ -79,10 +79,7 @@ class Game:
         for enemy in self.enemy_list:
             enemy.update(self.waypoint_list)
             if self.player.rect.colliderect((enemy.rect.x, enemy.rect.y, enemy.rect.width, enemy.rect.height)):
-                if self.player.rect.bottom < enemy.rect.top:
-                    self.enemy_list.remove(enemy)
-                else:
-                    self.state = 0
+                self.state = 0
 
         if self.player.rect.top > self.downpoint:
             self.state = 0
@@ -121,6 +118,8 @@ class Game:
         self.tile_height = self.map.tileheight
         self.tile_width = self.map.tilewidth
 
+        self.display = pygame.display.set_mode((self.tile_width * 20, self.tile_height * 15))
+
         self.farpoint = 0
 
         self.static_list.clear()
@@ -141,13 +140,25 @@ class Game:
                     player = Player(
                         pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height),
                         (255, 255, 0))
+
+                    try:
+                        if layer.properties["gravity"]:
+                            player.gravity = layer.properties['gravity']
+                    except:
+                        print("Cant load gravity, leaving at default")
+
                     try:
                         if layer.properties["speed"]:
                             player.speed = layer.properties['speed']
+                    except:
+                        print("Cant load speed, leaving at default")
+
+                    try:
                         if layer.properties["jump_power"]:
                             player.jump_power = layer.properties['jump_power']
                     except:
-                        print("Cant load player properties, leaving at default")
+                        print("Cant load jump power, leaving at default")
+
                     finally:
                         self.player = player
 
@@ -160,7 +171,7 @@ class Game:
                         if layer.properties["speed"]:
                             enemy.speed = layer.properties['speed']
                     except:
-                        print("Cant load enemy properties, leaving at default")
+                        print("Cant load enemy speed, leaving at default")
                     finally:
                         self.enemy_list.append(enemy)
 
