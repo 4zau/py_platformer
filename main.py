@@ -69,7 +69,6 @@ class Game:
                     if event.type == pygame.QUIT: running = False
                     if event.type == pygame.KEYDOWN:
                         self.load_map()
-                        self.state = 1
 
             pygame.display.flip()
 
@@ -113,7 +112,9 @@ class Game:
             self.map = pytmx.load_pygame(file_path)
         except:
             print("Please load a tmx map with static, player, enemy, waypoint layers")
-            exit()
+            return
+
+        self.state = 1
 
         self.tile_height = self.map.tileheight
         self.tile_width = self.map.tilewidth
@@ -121,6 +122,7 @@ class Game:
         self.display = pygame.display.set_mode((self.tile_width * 20, self.tile_height * 15))
 
         self.farpoint = 0
+        self.downpoint = 0
 
         self.static_list.clear()
         self.enemy_list.clear()
