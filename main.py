@@ -18,6 +18,7 @@ class Game:
         self.map = None
         self.font = None
         self.farpoint = 0
+        self.downpoint = 0
 
         self.FPS = 60
         self.gravity = 0.2
@@ -28,6 +29,7 @@ class Game:
         self.background_color = (72, 209, 204)
 
         self.xcamera = 0
+        self.ycamera = 0
 
         self.screen_size = self.width, self.height = 320, 240
         self.display = pygame.display.set_mode(self.screen_size)
@@ -62,12 +64,12 @@ class Game:
                 self.draw()
 
             if self.state == 0:
+                self.gameoverdraw()
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT: running = False
                     if event.type == pygame.KEYDOWN:
                         self.load_map()
                         self.state = 1
-                self.gameoverdraw()
 
             pygame.display.flip()
 
@@ -79,7 +81,7 @@ class Game:
             if self.player.rect.colliderect((enemy.rect.x, enemy.rect.y, enemy.rect.width, enemy.rect.height)):
                 self.state = 0
 
-        if self.player.rect.top > self.screen_size[1]:
+        if self.player.rect.top > self.downpoint:
             self.state = 0
 
         self.xcamera = -self.player.rect.centerx + self.display.get_rect().centerx
@@ -89,12 +91,17 @@ class Game:
         if self.player.rect.centerx > self.farpoint - self.display.get_rect().centerx:
             self.xcamera = -(self.farpoint - self.display.get_rect().width)
 
+        self.ycamera = -self.player.rect.centery + self.display.get_rect().centery
+
+        if self.player.rect.centery > self.downpoint - self.display.get_rect().centery:
+            self.ycamera = -(self.downpoint - self.display.get_rect().height)
+
     def draw(self):
-        for static in self.static_list: static.draw(self.display, self.xcamera)
+        for static in self.static_list: static.draw(self.display, self.xcamera, self.ycamera)
 
-        for enemy in self.enemy_list: enemy.draw(self.display, self.xcamera)
+        for enemy in self.enemy_list: enemy.draw(self.display, self.xcamera, self.ycamera)
 
-        self.player.draw(self.display, self.xcamera)
+        self.player.draw(self.display, self.xcamera, self.ycamera)
 
     def gameoverdraw(self):
         self.display.blit(self.font.render('Press any key', True, (255, 255, 255)),
@@ -121,26 +128,41 @@ class Game:
             if layer.name == "static":
                 for x, y, gid in layer.tiles():
                     if x * self.tile_width > self.farpoint: self.farpoint = x * self.tile_width
+                    if y * self.tile_height + self.tile_height > self.downpoint: self.downpoint = y * self.tile_height + self.tile_height
                     self.static_list.append(Static(
                         pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height),
                         (0, 255, 0)))
 
             if layer.name == "player":
+                if layer.properties["speed"]:
+                    player_speed = layer.properties['speed']
+                if layer.properties["jump_power"]:
+                    print(layer.properties['jump_power'])
+                    player_jump_power = layer.properties['jump_power']
                 for x, y, gid in layer.tiles():
-                    self.player = Player(
+                    player = Player(
                         pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height),
                         (255, 255, 0))
+                    player.speed = player_speed
+                    player.jump_power = player_jump_power
+                    self.player = player
 
             if layer.name == "enemy":
+                if layer.properties["speed"]:
+                    enemy_speed = layer.properties['speed']
                 for x, y, gid in layer.tiles():
-                    self.enemy_list.append(
-                        Enemy(pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height),
-                              (255, 0, 0)))
+                    enemy = Enemy(pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height),
+                              (255, 0, 0))
+                    enemy.speed = enemy_speed
+                    self.enemy_list.append(enemy)
 
             if layer.name == "waypoint":
                 for x, y, gid in layer.tiles():
                     self.waypoint_list.append(
                         pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height))
+
+                for property in layer.properties:
+                    print(property)
 
 
 if __name__ == "__main__":
