@@ -79,7 +79,10 @@ class Game:
         for enemy in self.enemy_list:
             enemy.update(self.waypoint_list)
             if self.player.rect.colliderect((enemy.rect.x, enemy.rect.y, enemy.rect.width, enemy.rect.height)):
-                self.state = 0
+                if self.player.rect.bottom < enemy.rect.top:
+                    self.enemy_list.remove(enemy)
+                else:
+                    self.state = 0
 
         if self.player.rect.top > self.downpoint:
             self.state = 0
@@ -134,35 +137,37 @@ class Game:
                         (0, 255, 0)))
 
             if layer.name == "player":
-                if layer.properties["speed"]:
-                    player_speed = layer.properties['speed']
-                if layer.properties["jump_power"]:
-                    print(layer.properties['jump_power'])
-                    player_jump_power = layer.properties['jump_power']
                 for x, y, gid in layer.tiles():
                     player = Player(
                         pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height),
                         (255, 255, 0))
-                    player.speed = player_speed
-                    player.jump_power = player_jump_power
-                    self.player = player
+                    try:
+                        if layer.properties["speed"]:
+                            player.speed = layer.properties['speed']
+                        if layer.properties["jump_power"]:
+                            player.jump_power = layer.properties['jump_power']
+                    except:
+                        print("Cant load player properties, leaving at default")
+                    finally:
+                        self.player = player
 
             if layer.name == "enemy":
-                if layer.properties["speed"]:
-                    enemy_speed = layer.properties['speed']
                 for x, y, gid in layer.tiles():
-                    enemy = Enemy(pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height),
-                              (255, 0, 0))
-                    enemy.speed = enemy_speed
-                    self.enemy_list.append(enemy)
+                    enemy = Enemy(
+                        pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height),
+                        (255, 0, 0))
+                    try:
+                        if layer.properties["speed"]:
+                            enemy.speed = layer.properties['speed']
+                    except:
+                        print("Cant load enemy properties, leaving at default")
+                    finally:
+                        self.enemy_list.append(enemy)
 
             if layer.name == "waypoint":
                 for x, y, gid in layer.tiles():
                     self.waypoint_list.append(
                         pygame.Rect(x * self.tile_width, y * self.tile_height, self.tile_width, self.tile_height))
-
-                for property in layer.properties:
-                    print(property)
 
 
 if __name__ == "__main__":
